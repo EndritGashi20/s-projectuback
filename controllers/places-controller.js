@@ -1,7 +1,9 @@
 const { v4: uuidv4 } = require('uuid');  // For uuid v8 and above
 const {validationResult} = require('express-validator');
+const getCordsForAddress = require('../util/location');
 
 const HttpError = require('../models/http-error');
+const Place = require('../models/place');
 
 let DUMMY_PLACES = [
   {
@@ -39,27 +41,41 @@ const getPlacesByUserId = (req, res, next) => {
   res.json({ places: userPlaces });
 };
 
-const createPlace = (req, res, next) => {
+const createPlace = async (req, res, next) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()){
     console.log(errors);
-    throw new HttpError('Invalid input')
+   return next(new HttpError('Invalid input'),442); 
   }
 
-  const { title, description, coordinates, address, creator } = req.body;
+  const { title, description,  address, creator } = req.body;
 
-  const createdPlace = {
-    id: uuidv4(),
+  let coordinates;
+
+  try {
+    coordinates = await getCordsForAddress(address);
+  } catch (error) {
+    next(error);
+  }
+
+  const createdPlace = new Place( {
     title,
     description,
     location: coordinates,
     address,
+    image: 'https://next-images.123rf.com/index/_next/image/?url=https://assets-cdn.123rf.com/index/static/assets/top-section-bg.jpeg&w=3840&q=75',
     creator
-  };
+  });
 
-  DUMMY_PLACES.push(createdPlace);  // Add the new place to the array
-
+  try {
+    await createdPlace.save();
+  } catch (err) {
+    const error = new HttpError(
+      'Creating place failed, please try again.',500
+    );
+    return next(error);
+  }
   res.status(201).json({ place: createdPlace });
 };
 
