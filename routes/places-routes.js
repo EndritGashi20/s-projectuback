@@ -26,4 +26,6 @@ router.patch('/:pid',[
     check('description').isLength({min: 5},)
 ],placesControllers.updatePlace);
 
+router.delete('/:pid', placesControllers.deletePlace);
+
 module.exports = router;
