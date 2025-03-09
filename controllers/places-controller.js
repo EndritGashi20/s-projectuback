@@ -70,7 +70,7 @@ const createPlace = async (req, res, next) => {
     );
   }
 
-  const { title, description, address, creator } = req.body;
+  const { title, description, address, creator,city } = req.body;
 
   let coordinates;
   try {
@@ -85,7 +85,8 @@ const createPlace = async (req, res, next) => {
     address,
     location: coordinates,
     image: req.file.path,
-    creator
+    creator,
+    city
   });
 
   let user;
@@ -205,6 +206,29 @@ const deletePlace = async (req, res, next) => {
   res.status(200).json({ message: 'Deleted place.' });
 };
 
+const getPlaceBasedonAddress = async (req, res) => {
+  try {
+    const { address, city } = req.query;
+
+    let query = {};
+    if (address) query.address = new RegExp(address, 'i'); // Case-insensitive search
+    if (city) query.city = new RegExp(city, 'i');
+
+    const places = await Place.find(query);
+
+    if (places.length === 0) {
+      return res.status(404).json({ message: 'No places found matching the criteria' });
+    }
+
+    res.status(200).json(places);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+
+
+exports.getPlaceBasedonAddress = getPlaceBasedonAddress;
 exports.getPlaceById = getPlaceById;
 exports.getPlacesByUserId = getPlacesByUserId;
 exports.createPlace = createPlace;
