@@ -12,7 +12,10 @@ const placeSchema = new Schema({
         lng: {type: Number, required:true},
         },
     creator: {type: mongoose.Types.ObjectId, required:true, ref:'User'},
-    city: {type: String}
-});
+    city: {type: String},
+    type: {type: String},
+    price: {type: Number}
+}, { timestamps: true });
 
 module.exports = mongoose.model('Place',placeSchema);
+

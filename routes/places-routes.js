@@ -7,10 +7,14 @@ const fileUpload = require('../middleware/file-upload');
 const router = express.Router();
 
 router.get('/search', placesControllers.getPlaceBasedonAddress);
- 
+router.get('/newest',placesControllers.getNewestPlaces);
+
+router.get('/all', placesControllers.getAllPlaces);
+
 router.get('/:pid', placesControllers.getPlaceById);
 
 router.get('/user/:uid', placesControllers.getPlacesByUserId);
+
 
 
 

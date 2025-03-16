@@ -70,7 +70,7 @@ const createPlace = async (req, res, next) => {
     );
   }
 
-  const { title, description, address, creator,city } = req.body;
+  const { title, description, address, creator,city,type,price } = req.body;
 
   let coordinates;
   try {
@@ -86,7 +86,9 @@ const createPlace = async (req, res, next) => {
     location: coordinates,
     image: req.file.path,
     creator,
-    city
+    city,
+    type,
+    price
   });
 
   let user;
@@ -147,6 +149,11 @@ const updatePlace = async (req, res, next) => {
     return next(error);
   }
 
+  if (place.creator.toString() !== req.userData.userId) {
+    const error = new HttpError('You are not allowed to edit this place.', 401);
+    return next(error);
+  }
+
   place.title = title;
   place.description = description;
 
@@ -162,6 +169,7 @@ const updatePlace = async (req, res, next) => {
 
   res.status(200).json({ place: place.toObject({ getters: true }) });
 };
+
 
 const deletePlace = async (req, res, next) => {
   const placeId = req.params.pid;
@@ -182,13 +190,21 @@ const deletePlace = async (req, res, next) => {
     return next(error);
   }
 
- // const imagePath = place.image;
+  if (place.creator.id !== req.userData.userId) {
+    const error = new HttpError(
+      'You are not allowed to delete this place.',
+      401
+    );
+    return next(error);
+  }
+
+  const imagePath = place.image;
 
   try {
     const sess = await mongoose.startSession();
     sess.startTransaction();
     await place.remove({ session: sess });
-    place.creator.places.pull(place._id);
+    place.creator.places.pull(place);
     await place.creator.save({ session: sess });
     await sess.commitTransaction();
   } catch (err) {
@@ -199,35 +215,80 @@ const deletePlace = async (req, res, next) => {
     return next(error);
   }
 
- /* fs.unlink(imagePath, err => {
+  fs.unlink(imagePath, err => {
     console.log(err);
-  });*/
+  });
 
   res.status(200).json({ message: 'Deleted place.' });
 };
 
 const getPlaceBasedonAddress = async (req, res) => {
   try {
-    const { address, city } = req.query;
+    const { address, city, type, minPrice, maxPrice } = req.query;
 
     let query = {};
-    if (address) query.address = new RegExp(address, 'i'); // Case-insensitive search
-    if (city) query.city = new RegExp(city, 'i');
+    
+    
+    if (address) query.address = new RegExp(address, "i");
+    if (city) query.city = new RegExp(city, "i");
+
+    
+    if (type && (type === "rent" || type === "buy")) {
+      query.type = type;
+    }
+
+    
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice); // Greater than or equal to minPrice
+      if (maxPrice) query.price.$lte = Number(maxPrice); // Less than or equal to maxPrice
+    }
 
     const places = await Place.find(query);
 
     if (places.length === 0) {
-      return res.status(404).json({ message: 'No places found matching the criteria' });
+      return res.status(404).json({ message: "No places found matching the criteria" });
     }
 
-    res.status(200).json(places);
+    res.status(200).json({ places });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
+const getAllPlaces = async (req, res, next) => {
+  try {
+    const places = await Place.find(); // Fetch all places
 
+    if (!places || places.length === 0) {
+      return res.status(404).json({ message: "No places found.Getallplaces" });
+    }
 
+    res.status(200).json({
+      places: places.map((place) => place.toObject({ getters: true })),
+    });
+  } catch (error) {
+    return next(new HttpError("Fetching places failed, please try again later.", 500));
+  }
+};
+const getNewestPlaces = async (req, res, next) => {
+  try {
+    const places = await Place.find().sort({ createdAt: -1 }); // Sorting by newest first
+
+    if (!places || places.length === 0) {
+      return res.status(404).json({ message: "No places found." });
+    }
+
+    res.status(200).json({
+      places: places.map((place) => place.toObject({ getters: true })),
+    });
+  } catch (error) {
+    return next(new HttpError("Fetching places failed, please try again later.", 500));
+  }
+};
+
+exports.getNewestPlaces = getNewestPlaces;
+exports.getAllPlaces = getAllPlaces;
 exports.getPlaceBasedonAddress = getPlaceBasedonAddress;
 exports.getPlaceById = getPlaceById;
 exports.getPlacesByUserId = getPlacesByUserId;
