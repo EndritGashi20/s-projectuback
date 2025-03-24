@@ -287,6 +287,82 @@ const getNewestPlaces = async (req, res, next) => {
   }
 };
 
+const addFavoritePlace = async (req, res, next) => {
+  const userId = req.params.uid;
+  const placeId = req.params.pid;
+
+  console.log("🚀 Adding Favorite:");
+  console.log("User ID:", userId);
+  console.log("Place ID:", placeId);
+
+  if (!userId || !placeId) {
+    return res.status(400).json({ message: "Invalid request: Missing userId or placeId" });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      console.log("❌ User not found");
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.favorites) {
+      user.favorites = [];
+    }
+
+    if (!user.favorites.includes(placeId)) {
+      user.favorites.push(placeId);
+      await user.save();
+    }
+
+    console.log("✅ Place added to favorites:", user.favorites);
+    res.status(200).json({ message: "Place added to favorites", favorites: user.favorites });
+  } catch (err) {
+    console.error("❌ Error adding to favorites:", err);
+    res.status(500).json({ message: "Adding to favorites failed" });
+  }
+};
+
+
+const removeFavoritePlace = async (req, res, next) => {
+  const userId = req.params.userId;
+  const placeId = req.params.placeId;
+
+  try {
+      const user = await User.findById(userId);
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      user.favorites = user.favorites.filter(id => id.toString() !== placeId);
+      await user.save();
+
+      res.status(200).json({ message: 'Place removed from favorites', favorites: user.favorites });
+  } catch (err) {
+      res.status(500).json({ message: 'Removing from favorites failed' });
+  }
+};
+
+const getFavoritePlaces = async (req, res, next) => {
+  
+  const userId = req.params.uid;
+
+  try {
+      const user = await User.findById(userId).populate('favorites');
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.status(200).json({ favorites: user.favorites });
+  } catch (err) {
+      res.status(500).json({ message: 'Fetching favorites failed' });
+  }
+};
+
+
+exports.getFavoritePlaces = getFavoritePlaces
+exports.removeFavoritePlace = removeFavoritePlace;
+exports.addFavoritePlace = addFavoritePlace;
 exports.getNewestPlaces = getNewestPlaces;
 exports.getAllPlaces = getAllPlaces;
 exports.getPlaceBasedonAddress = getPlaceBasedonAddress;

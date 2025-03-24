@@ -15,6 +15,7 @@ const placeSchema = new Schema({
     city: {type: String},
     type: {type: String},
     price: {type: Number}
+    
 }, { timestamps: true });
 
 module.exports = mongoose.model('Place',placeSchema);

@@ -1,0 +1,10 @@
+{
+    "env":{
+        "DB_USER":"endritg60",
+        "DB_PASSWORD":"endrit123",
+        "DB_NAME":"places",
+        "GOOGLE_API_KEY": "Foto ne telefon"
+    }
+}
+
+

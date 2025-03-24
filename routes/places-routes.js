@@ -7,28 +7,24 @@ const fileUpload = require('../middleware/file-upload');
 const router = express.Router();
 
 router.get('/search', placesControllers.getPlaceBasedonAddress);
-router.get('/newest',placesControllers.getNewestPlaces);
-
+router.get('/newest', placesControllers.getNewestPlaces);
 router.get('/all', placesControllers.getAllPlaces);
 
+// ✅ Fix: Ensure correct controller for favorite places
+router.get('/:uid/favorites', placesControllers.getFavoritePlaces);
+router.post('/:uid/favorites/:pid', placesControllers.addFavoritePlace);
+router.delete('/:uid/favorites/:pid', placesControllers.removeFavoritePlace);
+
 router.get('/:pid', placesControllers.getPlaceById);
-
 router.get('/user/:uid', placesControllers.getPlacesByUserId);
-
-
-
 
 router.post(
   '/',
   fileUpload.single('image'),
   [
-    check('title')
-      .not()
-      .isEmpty(),
+    check('title').not().isEmpty(),
     check('description').isLength({ min: 5 }),
-    check('address')
-      .not()
-      .isEmpty()
+    check('address').not().isEmpty(),
   ],
   placesControllers.createPlace
 );
@@ -36,10 +32,8 @@ router.post(
 router.patch(
   '/:pid',
   [
-    check('title')
-      .not()
-      .isEmpty(),
-    check('description').isLength({ min: 5 })
+    check('title').not().isEmpty(),
+    check('description').isLength({ min: 5 }),
   ],
   placesControllers.updatePlace
 );
