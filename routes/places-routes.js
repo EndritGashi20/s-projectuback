@@ -10,7 +10,7 @@ router.get('/search', placesControllers.getPlaceBasedonAddress);
 router.get('/newest', placesControllers.getNewestPlaces);
 router.get('/all', placesControllers.getAllPlaces);
 
-// ✅ Fix: Ensure correct controller for favorite places
+
 router.get('/:uid/favorites', placesControllers.getFavoritePlaces);
 router.post('/:uid/favorites/:pid', placesControllers.addFavoritePlace);
 router.delete('/:uid/favorites/:pid', placesControllers.removeFavoritePlace);
