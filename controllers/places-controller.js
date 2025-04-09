@@ -73,6 +73,7 @@ const createPlace = async (req, res, next) => {
   const { title, description, address, creator,city,type,price } = req.body;
 
   let coordinates;
+  const images = req.files.map(file => file.path);
   try {
     coordinates = await getCoordsForAddress(address);
   } catch (error) {
@@ -84,7 +85,7 @@ const createPlace = async (req, res, next) => {
     description,
     address,
     location: coordinates,
-    image: req.file.path,
+    images,
     creator,
     city,
     type,
