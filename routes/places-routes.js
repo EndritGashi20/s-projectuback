@@ -32,6 +32,11 @@ router.post(
   placesControllers.createPlace
 );
 
+
+
+router.delete('/:pid', placesControllers.deletePlace);
+
+router.use(checkAuth);
 router.patch(
   '/:pid',
   [
@@ -40,7 +45,5 @@ router.patch(
   ],
   placesControllers.updatePlace
 );
-
-router.delete('/:pid', placesControllers.deletePlace);
 
 module.exports = router;

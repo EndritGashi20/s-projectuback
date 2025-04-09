@@ -173,54 +173,43 @@ const updatePlace = async (req, res, next) => {
 
 
 const deletePlace = async (req, res, next) => {
-  const placeId = req.params.pid;
-
-  let place;
   try {
-    place = await Place.findById(placeId).populate('creator');
+    const placeId = req.params.pid;
+
+    if (!mongoose.Types.ObjectId.isValid(placeId)) {
+      return next(new HttpError('Invalid place ID', 400));
+    }
+
+    const place = await Place.findById(placeId).populate('creator');
+    if (!place) {
+      return next(new HttpError('Could not find place for this id', 404));
+    }
+
+    
+
+    const imagePaths = place.images;
+
+    await Place.deleteOne({ _id: placeId });
+
+    await User.findByIdAndUpdate(
+      place.creator.id,
+      { $pull: { places: placeId } }
+    );
+
+    if (imagePaths && imagePaths.length > 0) {
+      imagePaths.forEach(imagePath => {
+        fs.unlink(imagePath, err => {
+          if (err) console.error('Failed to delete image:', imagePath, err);
+        });
+      });
+    }
+
+    res.status(200).json({ message: 'Place deleted successfully' });
+
   } catch (err) {
-    const error = new HttpError(
-      'Something went wrong, could not delete place.',
-      500
-    );
-    return next(error);
+    console.error('Delete place error:', err);
+    return next(new HttpError('Deleting place failed, please try again', 500));
   }
-
-  if (!place) {
-    const error = new HttpError('Could not find place for this id.', 404);
-    return next(error);
-  }
-
-  if (place.creator.id !== req.userData.userId) {
-    const error = new HttpError(
-      'You are not allowed to delete this place.',
-      401
-    );
-    return next(error);
-  }
-
-  const imagePath = place.image;
-
-  try {
-    const sess = await mongoose.startSession();
-    sess.startTransaction();
-    await place.remove({ session: sess });
-    place.creator.places.pull(place);
-    await place.creator.save({ session: sess });
-    await sess.commitTransaction();
-  } catch (err) {
-    const error = new HttpError(
-      'Something went wrong, could not delete place.',
-      500
-    );
-    return next(error);
-  }
-
-  fs.unlink(imagePath, err => {
-    console.log(err);
-  });
-
-  res.status(200).json({ message: 'Deleted place.' });
 };
 
 const getPlaceBasedonAddress = async (req, res) => {
