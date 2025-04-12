@@ -3,7 +3,8 @@
         "DB_USER":"endritg60",
         "DB_PASSWORD":"endrit123",
         "DB_NAME":"places",
-        "GOOGLE_API_KEY": "Foto ne telefon"
+        "GOOGLE_API_KEY": "AIzaSyDj4DtFBa6c5d4rWiZZkTmcLr0dUOEVr6I",
+        "JWT_KEY":"supersecret_dont_share"
     }
 }
 
